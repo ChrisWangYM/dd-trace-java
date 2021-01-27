@@ -1,0 +1,15 @@
+muzzle {
+  pass {
+    group = "org.apache.axis2"
+    module = "axis2-kernel"
+    versions = "[1.2,)"
+  }
+}
+
+apply from: "$rootDir/gradle/java.gradle"
+
+dependencies {
+  compileOnly(group: 'org.apache.axis2', name: 'axis2-kernel', version: '1.2') {
+    exclude group: 'org.apache.woden', module: 'woden'
+  }
+}
