@@ -28,6 +28,7 @@ public abstract class HttpServerDecorator<REQUEST, CONNECTION, RESPONSE> extends
 
   // Assigned here to avoid repeat boxing and cache lookup.
   public static final Integer _500 = HTTP_STATUSES.get(500);
+  public static final Integer _200 = HTTP_STATUSES.get(200);
 
   protected abstract String method(REQUEST request);
 
