@@ -5,6 +5,8 @@ import static datadog.trace.bootstrap.instrumentation.api.Tags.HTTP_METHOD;
 import static datadog.trace.bootstrap.instrumentation.api.Tags.HTTP_STATUS;
 import static datadog.trace.bootstrap.instrumentation.api.Tags.PEER_HOST_IPV4;
 import static datadog.trace.bootstrap.instrumentation.api.Tags.PEER_HOST_IPV6;
+import static datadog.trace.bootstrap.instrumentation.decorator.HttpServerDecorator._200;
+import static datadog.trace.bootstrap.instrumentation.decorator.HttpServerDecorator._500;
 import static java.lang.Boolean.TRUE;
 
 import datadog.trace.bootstrap.instrumentation.api.AgentSpan;
@@ -67,9 +69,9 @@ public class AxisMessageDecorator extends BaseDecorator {
   public AgentSpan beforeFinish(final AgentSpan span) {
     if (null != span.getTag(HTTP_METHOD)) {
       if (TRUE.equals(span.isError())) {
-        span.setTag(HTTP_STATUS, 500);
+        span.setTag(HTTP_STATUS, _500);
       } else {
-        span.setTag(HTTP_STATUS, 200);
+        span.setTag(HTTP_STATUS, _200);
       }
     }
     return super.beforeFinish(span);
