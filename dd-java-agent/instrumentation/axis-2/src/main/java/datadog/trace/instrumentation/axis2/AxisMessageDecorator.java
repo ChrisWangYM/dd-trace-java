@@ -1,5 +1,6 @@
 package datadog.trace.instrumentation.axis2;
 
+import static datadog.trace.bootstrap.instrumentation.api.InternalSpanTypes.SOAP;
 import static datadog.trace.bootstrap.instrumentation.api.Tags.HTTP_METHOD;
 import static datadog.trace.bootstrap.instrumentation.api.Tags.HTTP_STATUS;
 import static datadog.trace.bootstrap.instrumentation.api.Tags.PEER_HOST_IPV4;
@@ -28,7 +29,7 @@ public class AxisMessageDecorator extends BaseDecorator {
 
   @Override
   protected CharSequence spanType() {
-    return null;
+    return SOAP;
   }
 
   @Override
