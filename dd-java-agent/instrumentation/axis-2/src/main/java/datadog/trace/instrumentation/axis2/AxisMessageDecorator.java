@@ -3,18 +3,18 @@ package datadog.trace.instrumentation.axis2;
 import static datadog.trace.bootstrap.instrumentation.api.InternalSpanTypes.SOAP;
 import static datadog.trace.bootstrap.instrumentation.api.Tags.HTTP_METHOD;
 import static datadog.trace.bootstrap.instrumentation.api.Tags.HTTP_STATUS;
+import static datadog.trace.bootstrap.instrumentation.api.Tags.HTTP_URL;
 import static datadog.trace.bootstrap.instrumentation.api.Tags.PEER_HOST_IPV4;
 import static datadog.trace.bootstrap.instrumentation.api.Tags.PEER_HOST_IPV6;
 import static datadog.trace.bootstrap.instrumentation.decorator.HttpServerDecorator._200;
 import static datadog.trace.bootstrap.instrumentation.decorator.HttpServerDecorator._500;
-import static java.lang.Boolean.TRUE;
 
 import datadog.trace.bootstrap.instrumentation.api.AgentSpan;
 import datadog.trace.bootstrap.instrumentation.api.UTF8BytesString;
 import datadog.trace.bootstrap.instrumentation.decorator.BaseDecorator;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.axis2.Constants;
 import org.apache.axis2.context.MessageContext;
+import org.apache.axis2.transport.http.HTTPConstants;
 
 @Slf4j
 public class AxisMessageDecorator extends BaseDecorator {
@@ -39,18 +39,29 @@ public class AxisMessageDecorator extends BaseDecorator {
     return AXIS2;
   }
 
-  public void onMessage(final AgentSpan span, final MessageContext context) {
-    String resourceName = context.getTo().getAddress();
+  public boolean shouldTrace(final MessageContext message) {
+    return true;
+  }
 
-    Object httpMethod = context.getProperty(Constants.Configuration.HTTP_METHOD);
+  public boolean sameTrace(final AgentSpan span, final MessageContext message) {
+    return true;
+  }
+
+  public void onMessage(final AgentSpan span, final MessageContext message) {
+    span.setResourceName(message.getSoapAction());
+
+    Object httpMethod = message.getProperty(HTTPConstants.HTTP_METHOD);
     if (httpMethod instanceof String) {
       span.setTag(HTTP_METHOD, (String) httpMethod);
-      resourceName = httpMethod + " " + resourceName;
+      String address = message.getTo().getAddress();
+      Object servicePrefix = message.getProperty("SERVICE_PREFIX");
+      if (!address.startsWith("http") && servicePrefix instanceof String) {
+        address = servicePrefix + address;
+      }
+      span.setTag(HTTP_URL, address);
     }
 
-    span.setResourceName(resourceName);
-
-    Object remoteAddr = context.getProperty(MessageContext.REMOTE_ADDR);
+    Object remoteAddr = message.getProperty(MessageContext.REMOTE_ADDR);
     if (remoteAddr instanceof String) {
       String peerHostIp = (String) remoteAddr;
       if (peerHostIp.indexOf(':') > 0) {
@@ -59,21 +70,24 @@ public class AxisMessageDecorator extends BaseDecorator {
         span.setTag(PEER_HOST_IPV4, peerHostIp);
       }
     }
-
-    if (context.isProcessingFault()) {
-      span.setError(true);
-    }
   }
 
-  @Override
-  public AgentSpan beforeFinish(final AgentSpan span) {
-    if (null != span.getTag(HTTP_METHOD)) {
-      if (TRUE.equals(span.isError())) {
+  public void onError(final AgentSpan span, final MessageContext message, final Throwable error) {
+    if (null != error) {
+      super.onError(span, error);
+    } else if (message.isProcessingFault()) {
+      span.setError(true);
+    }
+
+    if (null != span.getTag(HTTPConstants.HTTP_METHOD)) {
+      Object statusCode = message.getProperty(HTTPConstants.MC_HTTP_STATUS_CODE);
+      if (statusCode instanceof Integer) {
+        span.setTag(HTTP_STATUS, statusCode);
+      } else if (span.isError()) {
         span.setTag(HTTP_STATUS, _500);
       } else {
         span.setTag(HTTP_STATUS, _200);
       }
     }
-    return super.beforeFinish(span);
   }
 }
