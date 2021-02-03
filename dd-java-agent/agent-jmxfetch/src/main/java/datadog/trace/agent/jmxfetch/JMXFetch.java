@@ -6,6 +6,7 @@ import static org.datadog.jmxfetch.AppConfig.ACTION_COLLECT;
 
 import datadog.trace.api.Config;
 import datadog.trace.bootstrap.instrumentation.api.WriterConstants;
+import datadog.trace.util.AgentTaskScheduler;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -16,13 +17,14 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.datadog.jmxfetch.App;
 import org.datadog.jmxfetch.AppConfig;
 import org.datadog.jmxfetch.reporter.ReporterFactory;
 
 @Slf4j
-public class JMXFetch {
+public class JMXFetch implements AgentTaskScheduler.Task<Config> {
 
   public static final List<String> DEFAULT_CONFIGS =
       Collections.singletonList("jmxfetch-config.yaml");
@@ -31,17 +33,23 @@ public class JMXFetch {
 
   private static final String UNIX_DOMAIN_SOCKET_PREFIX = "unix://";
 
+  /** Main entry point into JMXFetch. */
   public static void run() {
-    run(Config.get());
-  }
-
-  // This is used by tests
-  private static void run(final Config config) {
+    Config config = Config.get();
     if (!config.isJmxFetchEnabled()) {
       log.debug("JMXFetch is disabled");
       return;
     }
 
+    int startDelay = config.getJmxFetchStartDelay();
+    if (startDelay > 0) {
+      AgentTaskScheduler.INSTANCE.schedule(new JMXFetch(), config, startDelay, TimeUnit.SECONDS);
+    } else {
+      new JMXFetch().run(config);
+    }
+  }
+
+  public void run(final Config config) {
     if (!log.isDebugEnabled()
         && System.getProperty("org.slf4j.simpleLogger.log.org.datadog.jmxfetch") == null) {
       // Reduce noisiness of jmxfetch logging.

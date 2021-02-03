@@ -22,6 +22,7 @@ class JMXFetchTest extends Specification {
     DatagramSocket socket = new DatagramSocket(0)
 
     System.setProperty("dd.jmxfetch.enabled", "true")
+    System.setProperty("dd.jmxfetch.start-delay", "0")
     System.setProperty("dd.jmxfetch.statsd.port", Integer.toString(socket.localPort))
     // Overwrite writer type to disable console jmxfetch reporter
     System.setProperty("dd.writer.type", "DDAgentWriter")
@@ -31,9 +32,8 @@ class JMXFetchTest extends Specification {
     Thread.currentThread().setContextClassLoader(classLoader)
     final Class<?> jmxFetchAgentClass =
       classLoader.loadClass("datadog.trace.agent.jmxfetch.JMXFetch")
-    final Method jmxFetchInstallerMethod = jmxFetchAgentClass.getDeclaredMethod("run", Config)
-    jmxFetchInstallerMethod.setAccessible(true)
-    jmxFetchInstallerMethod.invoke(null, new Config())
+    final Method jmxFetchInstallerMethod = jmxFetchAgentClass.getMethod("run", Config)
+    jmxFetchInstallerMethod.invoke(jmxFetchAgentClass.newInstance(), new Config())
 
     byte[] buf = new byte[1500]
     DatagramPacket packet = new DatagramPacket(buf, buf.length)
@@ -47,7 +47,6 @@ class JMXFetchTest extends Specification {
     received.contains("jvm.")
 
     cleanup:
-    jmxFetchInstallerMethod.setAccessible(false)
     socket.close()
     Thread.currentThread().setContextClassLoader(currentContextLoader)
   }
@@ -56,7 +55,9 @@ class JMXFetchTest extends Specification {
     // verify the agent starts up correctly with a bogus address.
     expect:
     IntegrationTestUtils.runOnSeparateJvm(AgentLoadedChecker.getName()
-      , ["-Ddd.jmxfetch.enabled=true", "-Ddd.jmxfetch.statsd.host=example.local"] as String[]
+      , ["-Ddd.jmxfetch.enabled=true",
+         "-Ddd.jmxfetch.start-delay=0",
+         "-Ddd.jmxfetch.statsd.host=example.local"] as String[]
       , "" as String[]
       , [:]
       , true) == 0
@@ -72,11 +73,11 @@ class JMXFetchTest extends Specification {
     Thread.currentThread().setContextClassLoader(classLoader)
     final Class<?> jmxFetchAgentClass =
       classLoader.loadClass("datadog.trace.agent.jmxfetch.JMXFetch")
-    final Method jmxFetchInstallerMethod = jmxFetchAgentClass.getDeclaredMethod("getInternalMetricFiles")
-    jmxFetchInstallerMethod.setAccessible(true)
+    final Method getInternalMetricFilesMethod = jmxFetchAgentClass.getDeclaredMethod("getInternalMetricFiles")
+    getInternalMetricFilesMethod.setAccessible(true)
 
     expect:
-    jmxFetchInstallerMethod.invoke(null).sort() == result.sort()
+    getInternalMetricFilesMethod.invoke(null).sort() == result.sort()
 
     cleanup:
     names.each {
