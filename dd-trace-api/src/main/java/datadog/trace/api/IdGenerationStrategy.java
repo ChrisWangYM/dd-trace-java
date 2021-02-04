@@ -23,6 +23,8 @@ public enum IdGenerationStrategy {
   THREAD_PREFIX {
     private final AtomicInteger id = new AtomicInteger(0);
     private final AtomicInteger prefix = new AtomicInteger(0);
+
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings({"SE_BAD_FIELD_STORE", "SE_BAD_FIELD"})
     private final ThreadLocal<Integer> tls =
         new ThreadLocal<Integer>() {
           @Override

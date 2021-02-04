@@ -103,6 +103,7 @@ public final class AgentTaskScheduler implements Executor {
     scheduleTarget(task, new WeakTarget<>(target), initialDelay, period, unit);
   }
 
+  @edu.umd.cs.findbugs.annotations.SuppressFBWarnings("JLM_JSR166_UTILCONCURRENT_MONITORENTER")
   private <T> void scheduleTarget(
       final Task<T> task,
       final Target<T> target,
@@ -271,6 +272,15 @@ public final class AgentTaskScheduler implements Executor {
         taskOrder = getDelay(NANOSECONDS) - other.getDelay(NANOSECONDS);
       }
       return taskOrder < 0 ? -1 : (taskOrder > 0 ? 1 : 0);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      try {
+        return obj == null ? false : (this.compareTo((Delayed) obj) != 0 ? false : true);
+      } catch (ClassCastException e) {
+        return false;
+      }
     }
 
     @Override
