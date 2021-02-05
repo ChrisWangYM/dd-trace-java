@@ -4,6 +4,11 @@ spotbugs {
   ignoreFailures = true
   // detector documentation is in the following link:
   // https://spotbugs-in-kengo-toda.readthedocs.io/en/lqc-list-detectors/detectors.html
+  excludeFilter = file("$rootDir/gradle/spotbugFilters/exclude.xml")
+}
+
+spotbugsMain {
+  ignoreFailures = false
   omitVisitors = [
     'DefaultEncodingDetector',
     'DoInsideDoPrivileged',
@@ -27,11 +32,6 @@ spotbugs {
     'SerializableIdiom',
     'UnreadFields',
   ]
-  excludeFilter = file("$rootDir/gradle/spotbugFilters/exclude.xml")
-}
-
-spotbugsMain {
-  ignoreFailures = false
   reports {
     html {
       enabled = true
