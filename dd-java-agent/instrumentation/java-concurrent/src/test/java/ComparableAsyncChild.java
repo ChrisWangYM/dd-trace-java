@@ -17,8 +17,7 @@ public class ComparableAsyncChild implements Runnable, Comparable<ComparableAsyn
   public boolean equals(Object o) {
     try {
       return this.compareTo((ComparableAsyncChild) o) == 0;
-    }
-    catch (Exception e) {
+    } catch (Exception e) {
       return false;
     }
   }
