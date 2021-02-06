@@ -2,13 +2,13 @@ apply plugin: 'com.github.spotbugs'
 
 spotbugs {
   ignoreFailures = true
-  // detector documentation is in the following link:
-  // https://spotbugs-in-kengo-toda.readthedocs.io/en/lqc-list-detectors/detectors.html
   excludeFilter = file("$rootDir/gradle/spotbugFilters/exclude.xml")
 }
 
 spotbugsMain {
   ignoreFailures = false
+  // detector documentation is in the following link:
+  // https://spotbugs-in-kengo-toda.readthedocs.io/en/lqc-list-detectors/detectors.html
   omitVisitors = [
     'DefaultEncodingDetector',
     'DoInsideDoPrivileged',
@@ -21,7 +21,6 @@ spotbugsMain {
     'FindRunInvocations',
     'FindUselessControlFlow',
     'InitializationChain',
-    'InvalidJUnitTest',
     'LazyInit',
     'LoadOfKnownNullValue',
     'LostLoggerDueToWeakReference',
@@ -35,17 +34,48 @@ spotbugsMain {
   reports {
     html {
       enabled = true
-      destination = file("$buildDir/reports/spotbugs/main/spotbugs.html")
+      destination = file("$buildDir/reports/spotbugs/spotbugsMain.html")
       stylesheet = 'fancy-hist.xsl'
     }
   }
 }
 
 spotbugsTest {
-  enabled = false
+  omitVisitors = [
+    'DefaultEncodingDetector',
+    'DoInsideDoPrivileged',
+    'DumbMethods',
+    'FindBadCast2',
+    'FindDeadLocalStores',
+    'FindNullDeref',
+    'FindReturnRef',
+    'FindUseOfNonSerializableValue',
+    'InconsistentAnnotations',
+    'InvalidJUnitTest',
+    'LazyInit',
+    'MethodReturnCheck',
+    'MutableStaticFields',
+    'Naming',
+    'OverridingEqualsNotSymmetrical',
+    'SerializableIdiom',
+    'UncallableMethodOfAnonymousClass',
+    'UnreadFields',
+  ]
+  ignoreFailures = false
+  reports {
+    html {
+      enabled = true
+      destination = file("$buildDir/reports/spotbugs/spotbugsTest.html")
+      stylesheet = 'fancy-hist.xsl'
+    }
+  }
+
 }
 
 dependencies {
   compileOnly 'net.jcip:jcip-annotations:1.0'
   compileOnly 'com.github.spotbugs:spotbugs-annotations:4.2.0'
+
+  testCompile 'net.jcip:jcip-annotations:1.0'
+  testCompile 'com.github.spotbugs:spotbugs-annotations:4.2.0'
 }

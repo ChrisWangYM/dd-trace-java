@@ -46,13 +46,6 @@ public class SmokeTest {
     }
   }
 
-  Map<? extends CharSequence, byte[]> constantPool =
-      new HashMap<CharSequence, byte[]>() {
-        {
-          put("foo", "foo".getBytes(StandardCharsets.UTF_8));
-          put("id1", "id1".getBytes(StandardCharsets.UTF_8));
-        }
-      };
   EncodingCache encodingCache = EncodingCachingStrategies.NO_CACHING;
 
   @Test
